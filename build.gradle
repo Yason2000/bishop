@@ -60,7 +60,7 @@ tasks.register("deployToBishop") {
             commandLine "scp", "build\\distributions\\$archiveFileName", "bishop:/home/yason"
         }
         exec {
-            commandLine "ssh", "bishop", "sudo pkill -e -f "java -classpath .*" + archiveName + ".jar.*""
+            commandLine "ssh", "bishop", "sudo pkill -e -f 'java -classpath .*" + archiveName + ".jar.*'"
         }
         exec {
             commandLine "ssh", "bishop", "rm -rf /home/yason/bishop/bin"
