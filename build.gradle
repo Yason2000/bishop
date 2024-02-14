@@ -1,0 +1,93 @@
+plugins {
+    id "java"
+    id "application"
+}
+
+compileJava {
+    sourceCompatibility = "11"
+    targetCompatibility = "11"
+}
+
+group "ua.net.yason"
+version "0.1.1"
+
+repositories {
+    mavenCentral()
+}
+
+application {
+    mainClass.set("ua.net.yason.bishop.MainClass")
+}
+
+distributions {
+    main {
+        contents {
+            into("conf") {
+                from "conf/bishop.conf"
+            }
+        }
+    }
+}
+
+dependencies {
+    compileOnly "org.projectlombok:lombok:1.18.30"
+    annotationProcessor "org.projectlombok:lombok:1.18.30"
+
+    implementation "org.slf4j:slf4j-api:2.0.11"
+    implementation "org.slf4j:slf4j-simple:2.0.11"
+
+    implementation "com.typesafe:config:1.4.3"
+    implementation "org.quartz-scheduler:quartz:2.3.2"
+    implementation "com.squareup.okhttp3:okhttp:4.12.0"
+    implementation "com.jayway.jsonpath:json-path:2.9.0"
+
+    implementation "com.pi4j:pi4j-core:2.4.0"
+    implementation "com.pi4j:pi4j-plugin-raspberrypi:2.4.0"
+    implementation "com.pi4j:pi4j-plugin-pigpio:2.4.0"
+    implementation "com.pi4j:pi4j-plugin-linuxfs:2.4.0"
+
+    implementation "com.fazecast:jSerialComm:2.10.4"
+
+    implementation "com.influxdb:influxdb-client-java:6.12.0"
+}
+
+tasks.register("deployToBishop") {
+    dependsOn("assembleDist")
+    def archiveName = "bishop-" + project.version
+    def archiveFileName = archiveName + ".zip"
+    doLast {
+        exec {
+            commandLine "scp", "build\\distributions\\$archiveFileName", "bishop:/home/yason"
+        }
+        exec {
+            commandLine "ssh", "bishop", "sudo pkill -e -f "java -classpath .*" + archiveName + ".jar.*""
+        }
+        exec {
+            commandLine "ssh", "bishop", "rm -rf /home/yason/bishop/bin"
+        }
+//        exec {
+//            commandLine "ssh", "bishop", "rm -rf /home/yason/bishop/conf"
+//        }
+        exec {
+            commandLine "ssh", "bishop", "rm -rf /home/yason/bishop/lib"
+        }
+        exec {
+            commandLine "ssh", "bishop", "unzip -j ~/$archiveFileName $archiveName/bin/* -d ~/bishop/bin"
+        }
+//        exec {
+//            commandLine "ssh", "bishop", "unzip -j ~/$archiveFileName $archiveName/conf/* -d ~/bishop/conf"
+//        }
+        exec {
+            commandLine "ssh", "bishop", "unzip -j ~/$archiveFileName $archiveName/lib/* -d ~/bishop/lib"
+        }
+        exec {
+            commandLine "ssh", "bishop", "rm ~/$archiveFileName"
+        }
+        exec {
+            commandLine "ssh", "bishop", "/usr/bin/screen -S bishop-sensors -dm sudo /home/yason/bishop/bin/bishop"
+        }
+        exec {
+            commandLine "ssh", "bishop", "screen -ls"
+        }
+    }
+}
