@@ -22,3 +22,6 @@ Based on Raspberry Pi Zero 2W
 - Pi4J
 - jSerialComm
 - InfluxDb
+
+#### Example of Collected Sensor Data Usage with Grafana Dashboard:
+![Home Weather Grafana Dashboard](doc/HomeWeather-Dashboards-Grafana.webp)
